@@ -96,3 +96,10 @@ export const playerState = [
     frames: 3,
   },
 ];
+
+export const explosionState = [
+  {
+    name: 'normal',
+    frames: 10,
+  },
+]

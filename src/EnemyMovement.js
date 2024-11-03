@@ -80,7 +80,7 @@ function animation() {
 
   requestAnimationFrame(animation)
 }
-animation()
+// animation()
 
 
 
