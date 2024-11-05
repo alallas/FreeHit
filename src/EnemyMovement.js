@@ -1,5 +1,6 @@
 import CreateRoleAnimation, { createRoleAnimationInfo } from './RoleAnimation.js'
 import { enemyState } from "./constants/RoleState.js";
+import Explosion from './AudioVisualEffect.js';
 
 const enemyCanvas = document.getElementById('enemy-canvas');
 const ctx = enemyCanvas.getContext('2d');
@@ -7,12 +8,17 @@ const CANVAS_WIDTH = enemyCanvas.width = 500;
 const CANVAS_HEIGHT = enemyCanvas.height = 400;
 
 
+const collisionCanvas = document.getElementById('color-collis-canvas');
+const collisionCtx = collisionCanvas.getContext('2d');
+collisionCanvas.width = 500;
+collisionCanvas.height = 400;
+const canvasPosition = collisionCanvas.getBoundingClientRect()
+
+
 const enemyImage = new Image();
 enemyImage.src = '../assets/enemy.png'
 
 const enemyAnimationInfo = createRoleAnimationInfo(enemyState, 32, 32)
-console.log('enemyAnimationInfo',enemyAnimationInfo)
-
 
 
 class Enemy {
@@ -32,11 +38,14 @@ class Enemy {
     this.directionX = Math.random() * 1 + 0;
     this.directionY = Math.random() * 1 - 0.5;
 
-    this.isOutsideOfCanvas = false;
+    this.needToDelete = false;
 
-    this.changedRatio = Math.random() + 0.5
+    this.changedRatio = Math.random() + 1
     this.changedWidth = this.role.roleWidth * this.changedRatio;
     this.changedHeight = this.role.roleHeight * this.changedRatio;
+
+    this.randomColor = [Math.floor(Math.random() * 255), Math.floor(Math.random() * 255), Math.floor(Math.random() * 255)]
+    this.colorBar = `rgb(${this.randomColor[0]},${this.randomColor[1]},${this.randomColor[2]})`;
 
   }
   update() {
@@ -64,19 +73,23 @@ class Enemy {
     this.y += this.directionY;
 
     if (this.x + this.role.roleWidth < 0) {
-      this.isOutsideOfCanvas = true;
+      this.needToDelete = true;
     }
     if (this.y < 0 || this.y + this.role.roleHeight > CANVAS_HEIGHT) {
       this.directionY = this.directionY * -1;
     }
 
 
-    
+
     this.role.updateRoleFrameIndex('move_f', this);
 
   }
   draw() {
-    this.role.drawRole(ctx, enemyImage, this.x, this.y, this.changedWidth, this.changedHeight)
+
+    collisionCtx.fillStyle = this.colorBar;
+    collisionCtx.fillRect(this.x, this.y, this.changedWidth, this.changedHeight);
+    
+    this.role.drawRole(ctx, enemyImage, this.x, this.y, this.changedWidth, this.changedHeight);
   }
 }
 
@@ -89,26 +102,15 @@ function drawScore() {
 
 
 
-
-window.addEventListener('click', (e) => {
-  const clickColor = ctx.getImageData(e.x, e.y, 1, 1)
-})
-
-
-
-
-
-
-const enemiesCount = 5;
-const enemies = [];
-
-for (let i = 0; i < enemiesCount; i++) {
-  enemies.push(new Enemy());
-}
-
-
-
 // 固定数量的敌人的动画
+
+// const enemiesCount = 5;
+// const enemies = [];
+
+// for (let i = 0; i < enemiesCount; i++) {
+//   enemies.push(new Enemy());
+// }
+
 // function animation() {
 //   ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT)
 //   enemies.forEach((item) => {
@@ -127,14 +129,16 @@ for (let i = 0; i < enemiesCount; i++) {
 
 // 不固定数量的敌人的动画
 let accumTime = 0;
-const roleShoewInterval = 500;
+const roleShoewInterval = 2000;
 let lastTime = 0;
 
 let roles = []
-
+let explosions = []
 
 function animate(timeTamp) {
   ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+  collisionCtx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+  
 
   const intervalTime = timeTamp - lastTime;
   lastTime = timeTamp;
@@ -145,11 +149,19 @@ function animate(timeTamp) {
     accumTime = 0;
     roles.sort((a, b) => a.changedWidth - b.changedHeight)
   }
+
   [...roles].forEach(i => {
     i.update();
     i.draw();
-  })
-  roles = roles.filter(i => !i.isOutsideOfCanvas);
+  });
+
+  [...explosions].forEach(i => {
+    i.update();
+    i.draw(ctx);
+  });
+
+  roles = roles.filter(i => !i.needToDelete);
+  explosions = explosions.filter(i => !i.needToDelete);
 
   drawScore();
 
@@ -158,6 +170,28 @@ function animate(timeTamp) {
 
 animate(0)
 
+
+
+
+window.addEventListener('click', (e) => {
+
+  const positionX = e.x - canvasPosition.left;
+  const positionY = e.y - canvasPosition.top;
+  const clickColor = collisionCtx.getImageData(positionX, positionY, 1, 1).data
+
+
+  roles.forEach((item) => {
+    if ((item.randomColor[0] === clickColor[0]) && (item.randomColor[1] === clickColor[1]) && (item.randomColor[2] === clickColor[2])) {
+      item.needToDelete = true;
+      score++;
+
+      explosions.push(new Explosion(item.x, item.y));
+    }
+  })
+
+
+  console.log('clickColor',clickColor)
+})
 
 
 

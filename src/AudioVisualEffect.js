@@ -1,18 +1,14 @@
 import CreateRoleAnimation, { createRoleAnimationInfo } from "./RoleAnimation.js";
 import { explosionState } from "./constants/RoleState.js";
 
-const explosionCanvas = document.getElementById('enemy-canvas');
-const ctx = explosionCanvas.getContext('2d');
-const CANVAS_WIDTH = explosionCanvas.width = 500;
-const CANVAS_HEIGHT = explosionCanvas.height = 400;
-const canvasPosition = explosionCanvas.getBoundingClientRect()
+// const explosionCanvas = document.getElementById('enemy-canvas');
+// const ctx = explosionCanvas.getContext('2d');
+// const CANVAS_WIDTH = explosionCanvas.width = 100;
+// const CANVAS_HEIGHT = explosionCanvas.height = 100;
+// const canvasPosition = explosionCanvas.getBoundingClientRect()
+
 
 const explosionAnimationInfo = createRoleAnimationInfo(explosionState, 64, 64)
-
-const explosionImage = new Image();
-explosionImage.src = '../assets/explosion.png';
-console.log('explosionImage', explosionImage)
-
 
 const explosions = [];
 
@@ -20,45 +16,46 @@ class Explosion {
   constructor(positionX, positionY) {
 
     this.role = new CreateRoleAnimation(explosionAnimationInfo);
-    this.roleFrameXPos = 0;
-    this.roleFrameYPos = 0;
-    this.currentFrame = 0;
+    this.explosionImage = new Image();
+    this.explosionImage.src = '../assets/explosion.png';
 
-    // this.x = positionX - this.role.roleWidth / 2;
-    // this.y = positionY - this.role.roleHeight / 2;
-    this.x = positionX;
-    this.y = positionY;
+    this.x = positionX - this.role.roleWidth / 2;
+    this.y = positionY - this.role.roleHeight / 2;
     this.angle = Math.random() * 6.2;
 
+    this.needToDelete = false;
+
     this.sound = new Audio();
-    this.sound.src = './'
+    this.sound.src = './';
 
   }
 
   update () {
     // if (this.currentFrame === 0) this.sound.play();
-    const [roleFrameXPos, roleFrameYPos] = this.role.updateRoleFrameIndex('normal', this.currentFrame)
-    this.roleFrameXPos = roleFrameXPos;
-    this.roleFrameYPos = roleFrameYPos;
-    this.currentFrame ++;
+    this.role.updateRoleFrameIndex('normal', this);
+
+    if (this.currentFrame && this.currentFrame > 40) {
+      this.needToDelete = true;
+    }
   }
 
-  draw() {
-    ctx.save();
-    ctx.translate(this.x, this.y);
-    ctx.rotate(this.angle);
+  draw(canvas) {
+    // ctx.save();
+    // ctx.translate(this.x, this.y);
+    // ctx.rotate(this.angle);
+    // this.role.drawRole(ctx, explosionImage, -(this.role.roleWidth / 2), -(this.role.roleHeight / 2));
+    // ctx.restore();
 
-    this.role.drawRole(ctx, explosionImage, this.roleFrameXPos, this.roleFrameYPos, -(this.role.roleWidth / 2), -(this.role.roleHeight / 2));
+    canvas && this.role.drawRole(canvas, this.explosionImage, this.x, this.y);
 
-    ctx.restore();
   }
 }
 
 
 
-window.addEventListener('click', (e) => {
-  createAnimation(e)
-})
+// window.addEventListener('click', (e) => {
+//   createAnimation(e)
+// })
 
 function createAnimation(e) {
   const positionX = e.x - canvasPosition.left;
@@ -80,6 +77,7 @@ function animation() {
   }
   requestAnimationFrame(animation);
 }
-animation()
+// animation()
 
 
+export default Explosion;
