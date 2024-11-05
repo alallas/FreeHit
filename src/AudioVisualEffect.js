@@ -24,12 +24,19 @@ class Explosion {
     this.roleFrameYPos = 0;
     this.currentFrame = 0;
 
-    this.x = positionX - this.role.roleWidth / 2;
-    this.y = positionY - this.role.roleHeight / 2;
+    // this.x = positionX - this.role.roleWidth / 2;
+    // this.y = positionY - this.role.roleHeight / 2;
+    this.x = positionX;
+    this.y = positionY;
+    this.angle = Math.random() * 6.2;
+
+    this.sound = new Audio();
+    this.sound.src = './'
 
   }
 
   update () {
+    // if (this.currentFrame === 0) this.sound.play();
     const [roleFrameXPos, roleFrameYPos] = this.role.updateRoleFrameIndex('normal', this.currentFrame)
     this.roleFrameXPos = roleFrameXPos;
     this.roleFrameYPos = roleFrameYPos;
@@ -37,20 +44,27 @@ class Explosion {
   }
 
   draw() {
-    this.role.drawRole(ctx, explosionImage, this.roleFrameXPos, this.roleFrameYPos, this.x, this.y)
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.angle);
+
+    this.role.drawRole(ctx, explosionImage, this.roleFrameXPos, this.roleFrameYPos, -(this.role.roleWidth / 2), -(this.role.roleHeight / 2));
+
+    ctx.restore();
   }
 }
 
 
 
 window.addEventListener('click', (e) => {
+  createAnimation(e)
+})
 
+function createAnimation(e) {
   const positionX = e.x - canvasPosition.left;
   const positionY = e.y - canvasPosition.top;
-
   explosions.push(new Explosion(positionX, positionY))
-
-})
+}
 
 
 
@@ -59,7 +73,7 @@ function animation() {
   for (let i = 0; i < explosions.length; i++) {
     explosions[i].update();
     explosions[i].draw();
-    if (explosions[i].currentFrame > 20) {
+    if (explosions[i].currentFrame > 50) {
       explosions.splice(i, 1);
       i--;
     }

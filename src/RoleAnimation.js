@@ -32,11 +32,32 @@ const playerAnimationInfo = createRoleAnimationInfo(playerState, 48, 48)
 class CreateRoleAnimation {
   constructor({roleAnimationsInfo, roleWidth, roleHeight}) {
     this.roleAnimationsInfo = roleAnimationsInfo;
+
     this.roleWidth = roleWidth;
     this.roleHeight = roleHeight;
+
+    this.roleFrameXPos = 0;
+    this.roleFrameYPos = 0;
   }
-  updateRoleFrameIndex(movementType, currentFrame, pauseFrame = 5) {
-    let currentMovementLocations = this.roleAnimationsInfo[movementType].allFramesLocations
+  updateRoleFrameIndex(movementType, roleContext, pauseFrame = 5) {
+    let currentMovementLocations = this.roleAnimationsInfo[movementType].allFramesLocations;
+    
+    let currentFrame;
+
+    if (roleContext && typeof roleContext === 'object') {
+      if (roleContext.currentFrame === null || roleContext.currentFrame === undefined) {
+        roleContext.currentFrame = 0;
+      } else {
+        roleContext.currentFrame ++;
+        if (roleContext.currentFrame >= pauseFrame * currentMovementLocations.length * 10) {
+          roleContext.currentFrame = 0;
+        }
+      }
+      currentFrame = roleContext.currentFrame;
+    } else {
+      currentFrame = roleContext;
+    }
+
 
     // currentMovementIndex是从0-6的数，表明当前帧的索引
     // currentFrame / pauseFrame向下取整 输出5个0，5个1...（即5帧期间都是展示同一个画面，相当于等待5帧）
@@ -44,11 +65,17 @@ class CreateRoleAnimation {
     let currentMovementIndex = Math.floor(currentFrame / pauseFrame) % currentMovementLocations.length;
     let roleFrameXPos = currentMovementIndex * this.roleWidth;
     let roleFrameYPos = currentMovementLocations[currentMovementIndex].y;
-    return [roleFrameXPos, roleFrameYPos]
+
+    this.roleFrameXPos = roleFrameXPos;
+    this.roleFrameYPos = roleFrameYPos;
+
+    return [roleFrameXPos, roleFrameYPos];
+
   }
 
-  drawRole(canvas, roleImage, roleFramePosXInImage, roleFramePosYInImage, rolePosXInCanvas = 0, rolePosYInCanvas = 0, roleChangedWidth = this.roleWidth, roleChangedHeight = this.roleHeight) {
-    canvas.drawImage && canvas.drawImage(roleImage, roleFramePosXInImage, roleFramePosYInImage, this.roleWidth, this.roleHeight, rolePosXInCanvas, rolePosYInCanvas, roleChangedWidth, roleChangedHeight)
+  drawRole(canvas, roleImage, rolePosXInCanvas = 0, rolePosYInCanvas = 0, roleChangedWidth = this.roleWidth, roleChangedHeight = this.roleHeight) {
+
+    canvas.drawImage && canvas.drawImage(roleImage, this.roleFrameXPos, this.roleFrameYPos, this.roleWidth, this.roleHeight, rolePosXInCanvas, rolePosYInCanvas, roleChangedWidth, roleChangedHeight)
   }
 }
 
@@ -58,10 +85,10 @@ let currentFrame = 0
 function animation() {
   ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-  const [x, y] = player1.updateRoleFrameIndex('attack_f', currentFrame, 5)
-  player1.drawRole(ctx, playerImage, x, y)
+  player1.updateRoleFrameIndex('attack_f', currentFrame, 5)
+  player1.drawRole(ctx, playerImage)
   currentFrame++;
-  // if (currentFrame > currentMovementLocations.length * 10) currentFrame = 0;
+
 
   requestAnimationFrame(animation)
 }
